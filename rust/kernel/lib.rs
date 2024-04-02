@@ -48,6 +48,7 @@ pub mod kunit;
 #[cfg(CONFIG_NET)]
 pub mod net;
 pub mod iov_iter;
+pub mod miscdev;
 pub mod mm;
 pub mod pages;
 pub mod prelude;

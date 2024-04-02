@@ -24,6 +24,7 @@
 #include <linux/uio.h>
 #include <linux/uaccess.h>
 #include <linux/delay.h>
+#include <linux/miscdevice.h>
 
 
 /* `bindgen` gets confused at certain things. */
