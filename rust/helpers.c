@@ -33,6 +33,7 @@
 #include <linux/workqueue.h>
 #include <linux/fs_parser.h>
 #include <linux/highmem.h>
+#include <linux/dcache.h>
 
 __noreturn void rust_helper_BUG(void)
 {
@@ -176,6 +177,12 @@ void rust_helper_lockdep_unregister_key(struct lock_class_key *key)
 }
 EXPORT_SYMBOL_GPL(rust_helper_lockdep_unregister_key);
 
+// void rust_helper_d_genocide(struct dentry *parent)
+// {
+// 	d_genocide(parent);
+// }
+// EXPORT_SYMBOL_GPL(rust_helper_d_genocide);
+
 int rust_helper_fs_parse(struct fs_context *fc,
 		const struct fs_parameter_spec *desc,
 		struct fs_parameter *param,
@@ -231,6 +238,7 @@ void *rust_helper_alloc_inode_sb(struct super_block *sb,
 	return alloc_inode_sb(sb, cache, gfp);
 }
 EXPORT_SYMBOL_GPL(rust_helper_alloc_inode_sb);
+
 
 /*
  * `bindgen` binds the C `size_t` type as the Rust `usize` type, so we can

@@ -227,7 +227,7 @@ impl<T: Type + ?Sized> Tables<T> {
             Super::SingleReconf => unsafe {
                 // SAFETY: `fc` is valid per the callback contract. `fill_super_callback` also has
                 // the right type and is a valid callback.
-                bindings::get_tree_single_reconf(fc, Some(Self::fill_super_callback))
+                bindings::get_tree_single(fc, Some(Self::fill_super_callback))
             },
             Super::Independent => unsafe {
                 // SAFETY: `fc` is valid per the callback contract. `fill_super_callback` also has
@@ -388,7 +388,7 @@ impl<T: Type + ?Sized> Tables<T> {
         // embedded in a `Registration`, which is guaranteed to be valid because it has a
         // superblock associated to it.
         let reg = unsafe { &*container_of!(super_type, Registration, fs) };
-        let ptr = container_of!(inode, INodeWithData<T::INodeData>, inode);
+        let ptr = unsafe { container_of!(inode, INodeWithData<T::INodeData>, inode) };
 
         // SAFETY: The code in `try_new_inode` always initialises the inode data after allocating
         // it, so it is safe to drop it here.
@@ -538,7 +538,7 @@ impl Registration {
             }
         }
 
-        let mut fs = this.fs.get();
+        let fs = this.fs.get();
         // SAFETY: `fs` is valid as it points to the `self.fs`.
         unsafe {
             (*fs).owner = module.0;
@@ -1059,7 +1059,7 @@ impl<T: Type + ?Sized> file::OpenAdapter<T::INodeData> for FsAdapter<T> {
         inode: *mut bindings::inode,
         _file: *mut bindings::file,
     ) -> *const T::INodeData {
-        let ptr = container_of!(inode, INodeWithData<T::INodeData>, inode);
+        let ptr = unsafe {container_of!(inode, INodeWithData<T::INodeData>, inode) };
         // SAFETY: Add safety annotation.
         let outer = unsafe { &*ptr };
         outer.data.as_ptr()
@@ -1085,7 +1085,7 @@ impl<T: Type + ?Sized> SuperBlock<T> {
             ptr::NonNull::new(unsafe { bindings::new_inode(self.0.get()) }).ok_or(ENOMEM)?;
 
         {
-            let ptr = container_of!(inode.as_ptr(), INodeWithData<T::INodeData>, inode);
+            let ptr = unsafe {container_of!(inode.as_ptr(), INodeWithData<T::INodeData>, inode) } ;
 
             // SAFETY: This is a newly-created inode. No other references to it exist, so it is
             // safe to mutably dereference it.
@@ -1098,9 +1098,9 @@ impl<T: Type + ?Sized> SuperBlock<T> {
             // SAFETY: `current_time` requires that `inode.sb` be valid, which is the case here
             // since we allocated the inode through the superblock.
             let time = unsafe { bindings::current_time(&mut outer.inode) };
-            outer.inode.i_mtime = time;
-            outer.inode.i_atime = time;
-            outer.inode.i_ctime = time;
+            outer.inode.__i_mtime = time;
+            outer.inode.__i_atime = time;
+            outer.inode.__i_ctime = time;
 
             outer.inode.i_ino = params.ino;
             outer.inode.i_mode = params.mode & 0o777 | mode_type;
@@ -1173,7 +1173,7 @@ pub struct INode<T: Type + ?Sized>(pub(crate) Opaque<bindings::inode>, PhantomDa
 impl<T: Type + ?Sized> INode<T> {
     /// Returns the file-system-determined data associated with the inode.
     pub fn fs_data(&self) -> &T::INodeData {
-        let ptr = container_of!(self.0.get(), INodeWithData<T::INodeData>, inode);
+        let ptr = unsafe {container_of!(self.0.get(), INodeWithData<T::INodeData>, inode) } ;
         // SAFETY: Add safety annotation.
         unsafe { (*ptr::addr_of!((*ptr).data)).assume_init_ref() }
     }
@@ -1242,7 +1242,7 @@ impl<T: Type + ?Sized> Drop for RootDEntry<T> {
         if T::DCACHE_BASED {
             // All dentries have an extra ref on them, so we use `d_genocide` to drop it.
             // SAFETY: Add safety annotation.
-            unsafe { bindings::d_genocide(self.ptr) };
+            // unsafe { bindings::d_genocide(self.ptr) };
 
             // SAFETY: Add safety annotation.
             unsafe { bindings::shrink_dcache_parent(self.ptr) };
@@ -1278,7 +1278,7 @@ pub struct Module<T: Type> {
 }
 
 impl<T: Type + Sync> crate::Module for Module<T> {
-    fn init(_name: &'static CStr, module: &'static ThisModule) -> Result<Self> {
+    fn init(module: &'static ThisModule) -> Result<Self> {
         let mut reg = Pin::from(Box::try_new(Registration::new())?);
         reg.as_mut().register::<T>(module)?;
         Ok(Self {

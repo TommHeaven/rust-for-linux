@@ -23,6 +23,8 @@
 #include <linux/poll.h>
 #include <linux/uio.h>
 #include <linux/uaccess.h>
+#include <linux/delay.h>
+
 
 /* `bindgen` gets confused at certain things. */
 const size_t RUST_CONST_HELPER_ARCH_SLAB_MINALIGN = ARCH_SLAB_MINALIGN;
@@ -33,4 +35,4 @@ const loff_t RUST_CONST_HELPER_MAX_LFS_FILESIZE = MAX_LFS_FILESIZE;
 
 const slab_flags_t RUST_CONST_HELPER_SLAB_RECLAIM_ACCOUNT = SLAB_RECLAIM_ACCOUNT;
 const slab_flags_t RUST_CONST_HELPER_SLAB_MEM_SPREAD = SLAB_MEM_SPREAD;
-const slab_flags_t RUST_CONST_HELPER_SLAB_ACCOUNT = SLAB_ACCOUNT;
+
